@@ -27,6 +27,7 @@ class OpcPackage(object):
     def __init__(self):
         super(OpcPackage, self).__init__()
         self._rels = RelationshipCollection(PACKAGE_URI.baseURI)
+        self._all_parts = []
 
     @property
     def main_document(self):
@@ -57,6 +58,14 @@ class OpcPackage(object):
         of the parts in this package.
         """
         return tuple([p for p in self._walk_parts(self._rels)])
+
+    @property
+    def all_parts(self):
+        """
+        Return an immutable sequence (tuple) containing a reference to each
+        of the parts in this package.
+        """
+        return tuple([p for p in self._all_parts])
 
     @property
     def rels(self):
@@ -305,6 +314,7 @@ class Unmarshaller(object):
         Unmarshaller._unmarshal_relationships(pkg_reader, pkg, parts)
         for part in parts.values():
             part._after_unmarshal()
+        pkg._all_parts = [parts[i] for i in parts]
 
     @staticmethod
     def _unmarshal_parts(pkg_reader, part_factory):

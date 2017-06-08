@@ -36,8 +36,8 @@ class PackageReader(object):
         phys_reader = PhysPkgReader(pkg_file)
         content_types = _ContentTypeMap.from_xml(phys_reader.content_types_xml)
         pkg_srels = PackageReader._srels_for(phys_reader, PACKAGE_URI)
-        sparts = PackageReader._load_serialized_parts(phys_reader, pkg_srels,
-                                                      content_types)
+        sparts = PackageReader._load_serialized_parts_from_content_types(phys_reader, pkg_srels,
+                                                                         content_types)
         phys_reader.close()
         return PackageReader(content_types, pkg_srels, sparts)
 
@@ -72,6 +72,22 @@ class PackageReader(object):
         for partname, blob, srels in part_walker:
             content_type = content_types[partname]
             spart = _SerializedPart(partname, content_type, blob, srels)
+            sparts.append(spart)
+        return tuple(sparts)
+
+    @staticmethod
+    def _load_serialized_parts_from_content_types(phys_reader, pkg_srels, content_types):
+        """
+        Return a list of |_SerializedPart| instances corresponding to the
+        parts in *phys_reader* accessible by reading contenttypes file.
+        """
+        sparts = []
+        for partname in content_types._overrides.keys():
+            part_uri = PackURI(partname)
+            blob = phys_reader.blob_for(part_uri)
+            srels = PackageReader._srels_for(phys_reader, part_uri)
+            content_type = content_types[part_uri]
+            spart = _SerializedPart(part_uri, content_type, blob, srels)
             sparts.append(spart)
         return tuple(sparts)
 
